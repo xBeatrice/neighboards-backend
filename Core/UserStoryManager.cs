@@ -22,34 +22,33 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "INSERT INTO UserStories (Id, Title, DueDate, Iteration, State, Description, StoryPoints) " +
-                                           "VALUES (@Id, @Title, @DueDate, @Iteration, @State, @Description, @StoryPoints)";
+                    command.CommandText = $"INSERT INTO UserStories (" +
+                                          $"{nameof(UserStory.Id)}, " +
+                                          $"{nameof(UserStory.Title)}, " +
+                                          $"{nameof(UserStory.DueDate)}, " +
+                                          $"{nameof(UserStory.State)}, " +
+                                          $"{nameof(UserStory.Description)}, " +
+                                          $"{nameof(UserStory.StoryPoints)}, " +
+                                          $"{nameof(UserStory.Tasks)}) " +
+                                          "VALUES (@Id, @Title, @DueDate, @State, @Description, @StoryPoints, @Tasks)";
+
                     command.Parameters.AddWithValue("@Id", userStory.Id);
                     command.Parameters.AddWithValue("@Title", userStory.Title);
                     command.Parameters.AddWithValue("@DueDate", userStory.DueDate);
                     command.Parameters.AddWithValue("@State", userStory.State);
                     command.Parameters.AddWithValue("@Description", userStory.Description);
                     command.Parameters.AddWithValue("@StoryPoints", userStory.StoryPoints);
-                    command.ExecuteNonQuery();
 
-                    // Insert task IDs associated with the user story
-                    if (userStory.Tasks != null && userStory.Tasks.Length > 0)
-                    {
-                        foreach (string taskId in userStory.Tasks)
-                        {
-                            using (SqlCommand taskCommand = connection.CreateCommand())
-                            {
-                                taskCommand.CommandText = "INSERT INTO UserStoryTasks (UserStoryId, TaskId) " +
-                                                           "VALUES (@UserStoryId, @TaskId)";
-                                taskCommand.Parameters.AddWithValue("@UserStoryId", userStory.Id);
-                                taskCommand.Parameters.AddWithValue("@TaskId", taskId);
-                                taskCommand.ExecuteNonQuery();
-                            }
-                        }
-                    }
+                    // Convert tasks array to a comma-separated string
+                    string tasksAsString = userStory.Tasks != null ? string.Join(",", userStory.Tasks) : "";
+                    command.Parameters.AddWithValue("@Tasks", tasksAsString);
+
+                    command.ExecuteNonQuery();
                 }
             }
         }
+
+
 
         public void UpdateUserStory(string userStoryId, UserStory userStoryModel)
         {
@@ -58,50 +57,51 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "UPDATE UserStories SET Title = @Title, DueDate = @DueDate, " +
-                                           "Iteration = @Iteration, State = @State, Description = @Description, " +
-                                           "StoryPoints = @StoryPoints " +
-                                           "WHERE Id = @Id";
+                    command.CommandText = $"UPDATE UserStories SET " +
+                                          $"{nameof(UserStory.Title)} = @Title, " +
+                                          $"{nameof(UserStory.DueDate)} = @DueDate, " +
+                                          $"{nameof(UserStory.State)} = @State, " +
+                                          $"{nameof(UserStory.Description)} = @Description, " +
+                                          $"{nameof(UserStory.StoryPoints)} = @StoryPoints " +
+                                          $"WHERE {nameof(UserStory.Id)} = @Id";
+
                     command.Parameters.AddWithValue("@Id", userStoryId);
                     command.Parameters.AddWithValue("@Title", userStoryModel.Title);
                     command.Parameters.AddWithValue("@DueDate", userStoryModel.DueDate);
-
                     command.Parameters.AddWithValue("@State", userStoryModel.State);
                     command.Parameters.AddWithValue("@Description", userStoryModel.Description);
                     command.Parameters.AddWithValue("@StoryPoints", userStoryModel.StoryPoints);
+
                     int rowsAffected = command.ExecuteNonQuery();
                     if (rowsAffected == 0)
                     {
                         throw new Exception($"UserStory with ID {userStoryId} does not exist.");
                     }
 
-                    // Update task associations for the user story
-                    if (userStoryModel.Tasks != null)
+                    // Clear existing task associations for the user story
+                    using (SqlCommand deleteCommand = connection.CreateCommand())
                     {
-                        // Remove existing task associations
-                        using (SqlCommand deleteCommand = connection.CreateCommand())
-                        {
-                            deleteCommand.CommandText = "DELETE FROM UserStoryTasks WHERE UserStoryId = @UserStoryId";
-                            deleteCommand.Parameters.AddWithValue("@UserStoryId", userStoryId);
-                            deleteCommand.ExecuteNonQuery();
-                        }
+                        deleteCommand.CommandText = "DELETE FROM UserStoryTasks WHERE UserStoryId = @UserStoryId";
+                        deleteCommand.Parameters.AddWithValue("@UserStoryId", userStoryId);
+                        deleteCommand.ExecuteNonQuery();
+                    }
 
-                        // Insert new task associations
-                        foreach (string taskId in userStoryModel.Tasks)
+                    // Insert new task associations
+                    foreach (string taskId in userStoryModel.Tasks)
+                    {
+                        using (SqlCommand insertTaskCommand = connection.CreateCommand())
                         {
-                            using (SqlCommand taskCommand = connection.CreateCommand())
-                            {
-                                taskCommand.CommandText = "INSERT INTO UserStoryTasks (UserStoryId, TaskId) " +
-                                                           "VALUES (@UserStoryId, @TaskId)";
-                                taskCommand.Parameters.AddWithValue("@UserStoryId", userStoryId);
-                                taskCommand.Parameters.AddWithValue("@TaskId", taskId);
-                                taskCommand.ExecuteNonQuery();
-                            }
+                            insertTaskCommand.CommandText = "INSERT INTO UserStoryTasks (UserStoryId, TaskId) " +
+                                                            "VALUES (@UserStoryId, @TaskId)";
+                            insertTaskCommand.Parameters.AddWithValue("@UserStoryId", userStoryId);
+                            insertTaskCommand.Parameters.AddWithValue("@TaskId", taskId);
+                            insertTaskCommand.ExecuteNonQuery();
                         }
                     }
                 }
             }
         }
+
 
         public UserStory GetUserStory(string userStoryId)
         {
@@ -131,11 +131,18 @@ namespace WebApplication3.Core
                     }
                 }
             }
+
+            // comments = SELECT * FROM Comments WHERE ItemId = userStory.id
+            // userStory.comments = comments
+
             return userStory;
         }
 
         public void DeleteUserStory(string userStoryId)
         {
+            // First remove Comments
+            // delete from comments where ItemId = userStoryId
+
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
@@ -161,7 +168,15 @@ namespace WebApplication3.Core
 
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT Id, Title, DueDate, StoryPoints, State, Description, Tasks FROM UserStories";
+                    command.CommandText = $"SELECT" +
+                        $"{nameof(UserStory.Id)}," +
+                        $"{nameof(UserStory.Title)}," +
+                        $"{nameof(UserStory.DueDate)}," +
+                        $"{nameof(UserStory.StoryPoints)}," +
+                        $"{nameof(UserStory.State)},"+
+                        $"{nameof(UserStory.Description)},"+
+                        $"{nameof(UserStory.Tasks)},"+
+                        "FROM UserStories";
 
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
