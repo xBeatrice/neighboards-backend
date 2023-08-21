@@ -12,6 +12,7 @@ namespace WebApplication3.Core
     public class UserManager : IUserManager
     {
         private string connectionString = ConfigurationManager.ConnectionStrings["MyConnection"].ConnectionString;
+
         public void CreateUser(User user)
         {
             user.Id = Guid.NewGuid().ToString();
@@ -21,7 +22,9 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "INSERT INTO Users (Id, Name, Activity) VALUES (@Id, @Name, @Activity)";
+                    command.CommandText = $"INSERT INTO Users ({nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)}) " +
+                                          $"VALUES (@Id, @Name, @Activity)";
+
                     command.Parameters.AddWithValue("@Id", user.Id);
                     command.Parameters.AddWithValue("@Name", user.Name);
                     command.Parameters.AddWithValue("@Activity", user.Activity);
@@ -37,7 +40,9 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "UPDATE Users SET Name = @Name, Activity = @Activity WHERE Id = @Id";
+                    command.CommandText = $"UPDATE Users SET {nameof(User.Name)} = @Name, {nameof(User.Activity)} = @Activity " +
+                                          $"WHERE {nameof(User.Id)} = @Id";
+
                     command.Parameters.AddWithValue("@Id", userId);
                     command.Parameters.AddWithValue("@Name", userModel.Name);
                     command.Parameters.AddWithValue("@Activity", userModel.Activity);
@@ -58,7 +63,9 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT Id, Name, Activity FROM Users WHERE Id = @Id";
+                    command.CommandText = $"SELECT {nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)} " +
+                                          $"FROM Users WHERE {nameof(User.Id)} = @Id";
+
                     command.Parameters.AddWithValue("@Id", userId);
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
@@ -84,7 +91,8 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "DELETE FROM Users WHERE Id = @Id";
+                    command.CommandText = $"DELETE FROM Users WHERE {nameof(User.Id)} = @Id";
+
                     command.Parameters.AddWithValue("@Id", userId);
                     int rowsAffected = command.ExecuteNonQuery();
                     if (rowsAffected == 0)
@@ -104,7 +112,7 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT Id, Name, Activity FROM Users";
+                    command.CommandText = $"SELECT {nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)} FROM Users";
 
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
@@ -125,7 +133,5 @@ namespace WebApplication3.Core
 
             return users; // Return the list of users directly
         }
-
-
     }
 }

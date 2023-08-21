@@ -23,8 +23,20 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "INSERT INTO Tasks (Id, Title, IsBug, DueDate, UserId, HoursCompleted, HoursRemaining, Iteration, State, AreaPath, Description) " +
-                                          "VALUES (@Id, @Title, @IsBug, @DueDate, @UserId, @HoursCompleted, @HoursRemaining, @Iteration, @State, @AreaPath, @Description)";
+                    command.CommandText = $"INSERT INTO Tasks (" +
+                                          $"{nameof(Task.Id)}, " +
+                                          $"{nameof(Task.Title)}, " +
+                                          $"{nameof(Task.IsBug)}, " +
+                                          $"{nameof(Task.DueDate)}, " +
+                                          $"{nameof(Task.UserId)}, " +
+                                          $"{nameof(Task.HoursCompleted)}, " +
+                                          $"{nameof(Task.HoursRemaining)}, " +
+                                          $"{nameof(Task.Iteration)}, " +
+                                          $"{nameof(Task.State)}, " +
+                                          $"{nameof(Task.AreaPath)}, " +
+                                          $"{nameof(Task.Description)}) " +
+                                          $"VALUES (@Id, @Title, @IsBug, @DueDate, @UserId, @HoursCompleted, @HoursRemaining, @Iteration, @State, @AreaPath, @Description)"; 
+                    
                     command.Parameters.AddWithValue("@Id", task.Id);
                     command.Parameters.AddWithValue("@Title", task.Title);
                     command.Parameters.AddWithValue("@IsBug", task.IsBug);
@@ -48,10 +60,19 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "UPDATE Tasks SET Title = @Title, IsBug = @IsBug, DueDate = @DueDate, " +
-                                          "UserId = @UserId, HoursCompleted = @HoursCompleted, HoursRemaining = @HoursRemaining, " +
-                                          "Iteration = @Iteration, State = @State, AreaPath = @AreaPath, Description = @Description " +
-                                          "WHERE Id = @Id";
+                    command.CommandText = $"UPDATE Tasks SET " +
+                                           $"{nameof(Task.Title)} = @Title, " +
+                                           $"{nameof(Task.IsBug)} = @IsBug, " +
+                                           $"{nameof(Task.DueDate)} = @DueDate, " +
+                                           $"{nameof(Task.UserId)} = @UserId, " +
+                                           $"{nameof(Task.HoursCompleted)} = @HoursCompleted, " +
+                                           $"{nameof(Task.HoursRemaining)} = @HoursRemaining, " +
+                                           $"{nameof(Task.Iteration)} = @Iteration, " +
+                                           $"{nameof(Task.State)} = @State, " +
+                                           $"{nameof(Task.AreaPath)} = @AreaPath, " +
+                                           $"{nameof(Task.Description)} = @Description " +
+                                           $"WHERE {nameof(Task.Id)} = @Id";
+
                     command.Parameters.AddWithValue("@Id", taskId);
                     command.Parameters.AddWithValue("@Title", taskModel.Title);
                     command.Parameters.AddWithValue("@IsBug", taskModel.IsBug);
@@ -80,8 +101,20 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT Id, Title, IsBug, DueDate, UserId, HoursCompleted, HoursRemaining, " +
-                                          "Iteration, State, AreaPath, Description FROM Tasks WHERE Id = @Id";
+                    command.CommandText = $"SELECT " +
+                                            $"{nameof(Task.Id)}, " +
+                                            $"{nameof(Task.Title)}, " +
+                                            $"{nameof(Task.IsBug)}, " +
+                                            $"{nameof(Task.DueDate)}, " +
+                                            $"{nameof(Task.UserId)}, " +
+                                            $"{nameof(Task.HoursCompleted)}, " +
+                                            $"{nameof(Task.HoursRemaining)}, " +
+                                            $"{nameof(Task.Iteration)}, " +
+                                            $"{nameof(Task.State)}, " +
+                                            $"{nameof(Task.AreaPath)}, " +
+                                            $"{nameof(Task.Description)} " +
+                                            $"FROM Tasks WHERE {nameof(Task.Id)} = @Id";
+
                     command.Parameters.AddWithValue("@Id", taskId);
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
@@ -115,7 +148,7 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "DELETE FROM Tasks WHERE Id = @Id";
+                    command.CommandText = $"DELETE FROM Tasks WHERE {nameof(Task.Id)} = @Id";
                     command.Parameters.AddWithValue("@Id", taskId);
                     int rowsAffected = command.ExecuteNonQuery();
                     if (rowsAffected == 0)
@@ -136,9 +169,18 @@ namespace WebApplication3.Core
 
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT Id, Title, IsBug, DueDate, HoursCompleted, HoursRemaining, Iteration, State, AreaPath, Description " +
-                                          "FROM Tasks " +
-                                          "WHERE UserId = @UserId";
+                    command.CommandText = $"SELECT " +
+                                          $"{nameof(Task.Id)}, " +
+                                          $"{nameof(Task.Title)}, " +
+                                          $"{nameof(Task.IsBug)}, " +
+                                          $"{nameof(Task.DueDate)}, " +
+                                          $"{nameof(Task.HoursCompleted)}, " +
+                                          $"{nameof(Task.HoursRemaining)}, " +
+                                          $"{nameof(Task.Iteration)}, " +
+                                          $"{nameof(Task.State)}, " +
+                                          $"{nameof(Task.AreaPath)}, " +
+                                          $"{nameof(Task.Description)} " +
+                                          $"FROM Tasks WHERE {nameof(Task.UserId)} = @UserId";
                     command.Parameters.AddWithValue("@UserId", userId);
 
                     using (SqlDataReader reader = command.ExecuteReader())
@@ -177,8 +219,20 @@ namespace WebApplication3.Core
 
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT Id, Title, IsBug, DueDate, UserId, HoursCompleted, HoursRemaining, Iteration, State, AreaPath, Description, Comments " +
-                                          "FROM Tasks";
+                    command.CommandText = $"SELECT " +
+                                           $"{nameof(Task.Id)}, " +
+                                           $"{nameof(Task.Title)}, " +
+                                           $"{nameof(Task.IsBug)}, " +
+                                           $"{nameof(Task.DueDate)}, " +
+                                           $"{nameof(Task.UserId)}, " +
+                                           $"{nameof(Task.HoursCompleted)}, " +
+                                           $"{nameof(Task.HoursRemaining)}, " +
+                                           $"{nameof(Task.Iteration)}, " +
+                                           $"{nameof(Task.State)}, " +
+                                           $"{nameof(Task.AreaPath)}, " +
+                                           $"{nameof(Task.Description)}, " +
+                                           $"{nameof(Task.Comments)} " +
+                                           $"FROM Tasks";
 
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
