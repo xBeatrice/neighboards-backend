@@ -12,5 +12,7 @@ namespace WebApplication3.Models
         public string Id { get; set; }
 
         public string Activity { get; set; }
+
+        public int Capacity { get; set; }
     }
 }

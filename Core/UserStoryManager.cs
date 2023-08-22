@@ -168,15 +168,16 @@ namespace WebApplication3.Core
 
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = $"SELECT" +
-                        $"{nameof(UserStory.Id)}," +
-                        $"{nameof(UserStory.Title)}," +
-                        $"{nameof(UserStory.DueDate)}," +
-                        $"{nameof(UserStory.StoryPoints)}," +
-                        $"{nameof(UserStory.State)},"+
-                        $"{nameof(UserStory.Description)},"+
-                        $"{nameof(UserStory.Tasks)},"+
-                        "FROM UserStories";
+                    command.CommandText = $"SELECT " +
+                     $"{nameof(UserStory.Id)}, " +
+                     $"{nameof(UserStory.Title)}, " +
+                     $"{nameof(UserStory.DueDate)}, " +
+                     $"{nameof(UserStory.StoryPoints)}, " +
+                     $"{nameof(UserStory.State)}, " +
+                     $"{nameof(UserStory.Description)}, " +
+                     $"{nameof(UserStory.Tasks)} " +
+                     "FROM UserStories";
+
 
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
@@ -190,7 +191,7 @@ namespace WebApplication3.Core
                                 StoryPoints = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
                                 State = reader.GetString(4),
                                 Description = reader.GetString(5),
-                                Tasks = reader.GetString(6).Split(',')
+                                Tasks = reader.GetString(6).Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                             };
 
                             userStories.Add(userStory);

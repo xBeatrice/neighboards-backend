@@ -22,12 +22,13 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = $"INSERT INTO Users ({nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)}) " +
-                                          $"VALUES (@Id, @Name, @Activity)";
+                    command.CommandText = $"INSERT INTO Users ({nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)}), ({nameof(User.Capacity)}, {nameof(User.Capacity)} " +
+                                          $"VALUES (@Id, @Name, @Activity, @Capacity)";
 
                     command.Parameters.AddWithValue("@Id", user.Id);
                     command.Parameters.AddWithValue("@Name", user.Name);
                     command.Parameters.AddWithValue("@Activity", user.Activity);
+                    command.Parameters.AddWithValue("@Capacity", user.Capacity);
                     command.ExecuteNonQuery();
                 }
             }
@@ -40,12 +41,13 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = $"UPDATE Users SET {nameof(User.Name)} = @Name, {nameof(User.Activity)} = @Activity " +
+                    command.CommandText = $"UPDATE Users SET {nameof(User.Name)} = @Name, {nameof(User.Activity)} = @Activity, {nameof(User.Capacity)} = @Capacity " +
                                           $"WHERE {nameof(User.Id)} = @Id";
 
                     command.Parameters.AddWithValue("@Id", userId);
                     command.Parameters.AddWithValue("@Name", userModel.Name);
                     command.Parameters.AddWithValue("@Activity", userModel.Activity);
+                    command.Parameters.AddWithValue("@Capacity", userModel.Capacity);
                     int rowsAffected = command.ExecuteNonQuery();
                     if (rowsAffected == 0)
                     {
@@ -63,7 +65,7 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = $"SELECT {nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)} " +
+                    command.CommandText = $"SELECT {nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)}, {nameof(User.Capacity)} " +
                                           $"FROM Users WHERE {nameof(User.Id)} = @Id";
 
                     command.Parameters.AddWithValue("@Id", userId);
@@ -75,7 +77,8 @@ namespace WebApplication3.Core
                             {
                                 Id = reader.GetString(0),
                                 Name = reader.GetString(1),
-                                Activity = reader.GetString(2)
+                                Activity = reader.GetString(2),
+                                Capacity = reader.GetInt32(3)
                             };
                         }
                     }
@@ -112,7 +115,8 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = $"SELECT {nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)} FROM Users";
+                    command.CommandText = $"SELECT {nameof(User.Id)}, {nameof(User.Name)}, {nameof(User.Activity)}, {nameof(User.Capacity)} " +
+                        $" FROM Users";
 
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
@@ -122,7 +126,8 @@ namespace WebApplication3.Core
                             {
                                 Id = reader.GetString(0),
                                 Name = reader.GetString(1),
-                                Activity = reader.GetString(2)
+                                Activity = reader.GetString(2),
+                                Capacity = reader.GetInt32(3)
                             };
 
                             users.Add(user);
