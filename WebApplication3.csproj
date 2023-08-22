@@ -144,7 +144,9 @@
     <Compile Include="Controllers\TasksController.cs" />
     <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Controllers\UserStoriesController.cs" />
+    <Compile Include="Core\CommentManager.cs" />
     <Compile Include="Core\FileManager.cs" />
+    <Compile Include="Core\Interfaces\ICommentManager.cs" />
     <Compile Include="Core\Interfaces\IFileManager.cs" />
     <Compile Include="Core\Interfaces\ITaskManager.cs" />
     <Compile Include="Core\Interfaces\IUserManager.cs" />

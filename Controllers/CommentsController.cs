@@ -1,19 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using System.Collections.Generic;
+using System.Web.Http.Cors;
+using System.Web.Mvc;
+using WebApplication3.Core.Interfaces;
+using WebApplication3.Models;
 
 namespace WebApplication3.Controllers
 {
-    public class CommentsController
+    [EnableCors(origins: "http://localhost:3000", headers: "*", methods: "*")]
+    public class CommentsController : Controller
     {
-        // TODO APIs
+        private ICommentManager commentManager;
 
-        // ex: GET GetComment(string id)
-        // { commentsManager.GetCommentAsync(id} }
 
-        // ex: GET GetComments(string itemId)
-        // { commentsManager.GetCommentsAsync(itemId} }
+        [HttpGet]
+        [Route("comments/get/{itemId}")]
+        public ActionResult GetComments(string itemId)
+        {
+            List<Comment> comments = commentManager.GetComments(itemId);
+            return Json(comments, JsonRequestBehavior.AllowGet);
+        }
 
+        [HttpPost]
+        [Route("comments/create")]
+        public void CreateComment(Comment comment)
+        {
+            commentManager.CreateComment(comment);
+        }
+
+        [HttpPost]
+        [Route("comments/update/{commentId}")]
+        public void UpdateComment(string commentId, Comment comment)
+        {
+            commentManager.UpdateComment(commentId, comment);
+        }
+
+        [HttpGet]
+        [Route("comments/delete/{commentId}")]
+        public void DeleteComment(string commentId)
+        {
+            commentManager.DeleteComment(commentId);
+        }
     }
 }
