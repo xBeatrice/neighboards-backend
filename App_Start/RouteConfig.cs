@@ -27,13 +27,13 @@ namespace WebApplication3
 
             routes.MapRoute(
                 name: "CreateUserStory",
-                url: "userStories",
+                url: "userStories/create",
                 defaults: new { controller = "UserStories", action = "CreateUserStory" }
             );
 
             routes.MapRoute(
                 name: "UpdateUserStory",
-                url: "userStories/{userStoryId}",
+                url: "userStories/update/{userStoryId}",
                 defaults: new { controller = "UserStories", action = "UpdateUserStory" }
             );
 
@@ -100,7 +100,7 @@ namespace WebApplication3
 
             routes.MapRoute(
                 name: "UpdateUser",
-                url: "users/{userName}",
+                url: "users/update/{userId}",
                 defaults: new { controller = "User", action = "UpdateUser" }
             );
 

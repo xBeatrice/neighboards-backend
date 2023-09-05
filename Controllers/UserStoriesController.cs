@@ -32,7 +32,7 @@ namespace WebApplication3.Controllers
 
 
         [HttpPost]
-        [Route("userStories")]
+        [Route("userStories/create")]
         public void CreateUserStory(UserStory userStory)
         {
             userStoriesManager.CreateUserStory(userStory);
@@ -41,7 +41,7 @@ namespace WebApplication3.Controllers
      
 
         [HttpPost]
-        [Route("userStories/{userStoryId}")]
+        [Route("userStories/update/{userStoryId}")]
         public void UpdateUserStory(string userStoryId, UserStory userStory)
         {
             userStoriesManager.UpdateUserStory(userStoryId, userStory);

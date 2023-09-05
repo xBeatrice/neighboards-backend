@@ -34,8 +34,9 @@ namespace WebApplication3.Core
                                           $"{nameof(Task.Iteration)}, " +
                                           $"{nameof(Task.State)}, " +
                                           $"{nameof(Task.AreaPath)}, " +
+                                          $"{nameof(Task.UserStoryId)}, " +
                                           $"{nameof(Task.Description)}) " +
-                                          $"VALUES (@Id, @Title, @IsBug, @DueDate, @UserId, @HoursCompleted, @HoursRemaining, @Iteration, @State, @AreaPath, @Description)"; 
+                                          $"VALUES (@Id, @Title, @IsBug, @DueDate, @UserId, @HoursCompleted, @HoursRemaining, @Iteration, @State, @AreaPath, @UserStoryId, @Description)"; 
                     
                     command.Parameters.AddWithValue("@Id", task.Id);
                     command.Parameters.AddWithValue("@Title", task.Title);
@@ -48,6 +49,8 @@ namespace WebApplication3.Core
                     command.Parameters.AddWithValue("@State", task.State);
                     command.Parameters.AddWithValue("@AreaPath", task.AreaPath);
                     command.Parameters.AddWithValue("@Description", task.Description);
+                    command.Parameters.AddWithValue("@UserStoryId", task.UserStoryId);
+
                     command.ExecuteNonQuery();
                 }
             }
@@ -70,6 +73,7 @@ namespace WebApplication3.Core
                                            $"{nameof(Task.Iteration)} = @Iteration, " +
                                            $"{nameof(Task.State)} = @State, " +
                                            $"{nameof(Task.AreaPath)} = @AreaPath, " +
+                                           $"{nameof(Task.UserStoryId)} = @UserStoryId, " +
                                            $"{nameof(Task.Description)} = @Description " +
                                            $"WHERE {nameof(Task.Id)} = @Id";
 
@@ -84,6 +88,8 @@ namespace WebApplication3.Core
                     command.Parameters.AddWithValue("@State", taskModel.State);
                     command.Parameters.AddWithValue("@AreaPath", taskModel.AreaPath);
                     command.Parameters.AddWithValue("@Description", taskModel.Description);
+                    command.Parameters.AddWithValue("@UserStoryId", taskModel.UserStoryId);
+
                     int rowsAffected = command.ExecuteNonQuery();
                     if (rowsAffected == 0)
                     {
@@ -112,6 +118,7 @@ namespace WebApplication3.Core
                                             $"{nameof(Task.Iteration)}, " +
                                             $"{nameof(Task.State)}, " +
                                             $"{nameof(Task.AreaPath)}, " +
+                                            $"{nameof(Task.UserStoryId)}, " +
                                             $"{nameof(Task.Description)} " +
                                             $"FROM Tasks WHERE {nameof(Task.Id)} = @Id";
 
@@ -132,7 +139,9 @@ namespace WebApplication3.Core
                                 Iteration = reader.GetInt32(7),
                                 State = reader.GetString(8),
                                 AreaPath = reader.GetString(9),
-                                Description = reader.GetString(10)
+                                UserStoryId = reader.GetString(10),
+                                Description = reader.GetString(11),
+                                Comments = new List<Comment>()
                             };
                         }
                     }
@@ -150,6 +159,7 @@ namespace WebApplication3.Core
                 {
                     command.CommandText = $"DELETE FROM Tasks WHERE {nameof(Task.Id)} = @Id";
                     command.Parameters.AddWithValue("@Id", taskId);
+
                     int rowsAffected = command.ExecuteNonQuery();
                     if (rowsAffected == 0)
                     {
@@ -179,6 +189,7 @@ namespace WebApplication3.Core
                                           $"{nameof(Task.Iteration)}, " +
                                           $"{nameof(Task.State)}, " +
                                           $"{nameof(Task.AreaPath)}, " +
+                                          $"{nameof(Task.UserStoryId)}, " +
                                           $"{nameof(Task.Description)} " +
                                           $"FROM Tasks WHERE {nameof(Task.UserId)} = @UserId";
                     command.Parameters.AddWithValue("@UserId", userId);
@@ -198,7 +209,9 @@ namespace WebApplication3.Core
                                 Iteration = reader.GetInt32(6),
                                 State = reader.GetString(7),
                                 AreaPath = reader.GetString(8),
-                                Description = reader.GetString(9)
+                                UserStoryId = reader.GetString(9),
+                                Description = reader.GetString(10),
+                                Comments = new List<Comment>()
                             };
 
                             tasks.Add(task);
@@ -231,7 +244,7 @@ namespace WebApplication3.Core
                                            $"{nameof(Task.State)}, " +
                                            $"{nameof(Task.AreaPath)}, " +
                                            $"{nameof(Task.Description)}, " +
-                                           $"{nameof(Task.Comments)} " +
+                                           $"{nameof(Task.UserStoryId)} " +
                                            $"FROM Tasks";
 
                     using (SqlDataReader reader = command.ExecuteReader())
@@ -251,15 +264,9 @@ namespace WebApplication3.Core
                                 State = reader.GetString(8),
                                 AreaPath = reader.GetString(9),
                                 Description = reader.GetString(10),
-                                Comments = new List<Comment>() // Initialize the comments list
+                                UserStoryId = reader.GetString(11),
+                                Comments = new List<Comment>()
                             };
-
-                            if (!reader.IsDBNull(11))
-                            {
-                                string commentsJson = reader.GetString(11);
-                                List<Comment> comments = JsonConvert.DeserializeObject<List<Comment>>(commentsJson);
-                                task.Comments = comments; // Assign the 'comments' list to the task property.
-                            }
 
                             tasks.Add(task);
                         }

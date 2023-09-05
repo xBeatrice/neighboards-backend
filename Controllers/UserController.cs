@@ -32,21 +32,21 @@ namespace WebApplication3.Controllers
 
         [HttpPost]
         [Route("users")]
-        public void CreateUser(string groupName, User user)
+        public void CreateUser(User user)
         {
             userManager.CreateUser(user);
         }
 
         [HttpPost]
-        [Route("users/{userId}")]
-        public void UpdateUser(string groupName, string userId, User user)
+        [Route("users/update/{userId}")]
+        public void UpdateUser(string userId, User user)
         {
             userManager.UpdateUser(userId, user);
         }
 
         [HttpDelete]
         [Route("users/{userId}")]
-        public void DeleteUser(string groupName, string userId)
+        public void DeleteUser(string userId)
         {
             userManager.DeleteUser(userId);
         }

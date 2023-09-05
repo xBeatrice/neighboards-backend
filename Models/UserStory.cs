@@ -13,7 +13,7 @@ namespace WebApplication3.Models
         public int StoryPoints { get; set; } // New property for StoryPoints
         public string State { get; set; }
         public string Description { get; set; }
-        public string[] Tasks { get; set; } // New property for Tasks array
+        public List<string> Tasks { get; set; } // New property for Tasks array
     }
 
 }

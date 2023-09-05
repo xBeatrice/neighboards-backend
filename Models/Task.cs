@@ -17,5 +17,6 @@ namespace WebApplication3.Models
 
         public string UserId { get; set; }
 
+        public string UserStoryId { get; set; }
     }
 }

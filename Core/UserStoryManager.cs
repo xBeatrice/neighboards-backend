@@ -28,9 +28,13 @@ namespace WebApplication3.Core
                                           $"{nameof(UserStory.DueDate)}, " +
                                           $"{nameof(UserStory.State)}, " +
                                           $"{nameof(UserStory.Description)}, " +
-                                          $"{nameof(UserStory.StoryPoints)}, " +
-                                          $"{nameof(UserStory.Tasks)}) " +
-                                          "VALUES (@Id, @Title, @DueDate, @State, @Description, @StoryPoints, @Tasks)";
+                                          $"{nameof(UserStory.StoryPoints)}) " +
+                                          "VALUES (@Id, @Title, @DueDate, @State, @Description, @StoryPoints)";
+
+                    userStory.Tasks.ForEach(taskId =>
+                    {
+                        command.CommandText += $"\nINSERT INTO UserStoryTaskLink (UserStoryId, TaskId) VALUES (@Id, {taskId})";
+                    });
 
                     command.Parameters.AddWithValue("@Id", userStory.Id);
                     command.Parameters.AddWithValue("@Title", userStory.Title);
@@ -39,16 +43,26 @@ namespace WebApplication3.Core
                     command.Parameters.AddWithValue("@Description", userStory.Description);
                     command.Parameters.AddWithValue("@StoryPoints", userStory.StoryPoints);
 
-                    // Convert tasks array to a comma-separated string
-                    string tasksAsString = userStory.Tasks != null ? string.Join(",", userStory.Tasks) : "";
-                    command.Parameters.AddWithValue("@Tasks", tasksAsString);
+                    command.ExecuteNonQuery();
+                }
+
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    string commandText = "";
+
+                    userStory.Tasks.ForEach(taskId =>
+                    {
+                        commandText += $"UPDATE Tasks SET UserStoryId = @Id WHERE TaskId = {taskId}\n";
+                    });
+
+                    command.CommandText = commandText;
+
+                    command.Parameters.AddWithValue("@Id", userStory.Id);
 
                     command.ExecuteNonQuery();
                 }
             }
         }
-
-
 
         public void UpdateUserStory(string userStoryId, UserStory userStoryModel)
         {
@@ -57,13 +71,24 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = $"UPDATE UserStories SET " +
+                    var commandText = $"UPDATE UserStories SET " +
                                           $"{nameof(UserStory.Title)} = @Title, " +
                                           $"{nameof(UserStory.DueDate)} = @DueDate, " +
                                           $"{nameof(UserStory.State)} = @State, " +
                                           $"{nameof(UserStory.Description)} = @Description, " +
                                           $"{nameof(UserStory.StoryPoints)} = @StoryPoints " +
                                           $"WHERE {nameof(UserStory.Id)} = @Id";
+
+                    // Clear existing task associations for the user story
+                    commandText += "\nUPDATE Tasks SET UserStoryId = null WHERE UserStoryId = @Id";
+
+                    // Insert new task associations
+                    userStoryModel.Tasks?.ForEach(taskId =>
+                    {
+                        commandText += $"\nUPDATE Tasks SET UserStoryId = @Id WHERE Id = {taskId}";
+                    });
+
+                    command.CommandText = commandText;
 
                     command.Parameters.AddWithValue("@Id", userStoryId);
                     command.Parameters.AddWithValue("@Title", userStoryModel.Title);
@@ -72,32 +97,7 @@ namespace WebApplication3.Core
                     command.Parameters.AddWithValue("@Description", userStoryModel.Description);
                     command.Parameters.AddWithValue("@StoryPoints", userStoryModel.StoryPoints);
 
-                    int rowsAffected = command.ExecuteNonQuery();
-                    if (rowsAffected == 0)
-                    {
-                        throw new Exception($"UserStory with ID {userStoryId} does not exist.");
-                    }
-
-                    // Clear existing task associations for the user story
-                    using (SqlCommand deleteCommand = connection.CreateCommand())
-                    {
-                        deleteCommand.CommandText = "DELETE FROM UserStoryTasks WHERE UserStoryId = @UserStoryId";
-                        deleteCommand.Parameters.AddWithValue("@UserStoryId", userStoryId);
-                        deleteCommand.ExecuteNonQuery();
-                    }
-
-                    // Insert new task associations
-                    foreach (string taskId in userStoryModel.Tasks)
-                    {
-                        using (SqlCommand insertTaskCommand = connection.CreateCommand())
-                        {
-                            insertTaskCommand.CommandText = "INSERT INTO UserStoryTasks (UserStoryId, TaskId) " +
-                                                            "VALUES (@UserStoryId, @TaskId)";
-                            insertTaskCommand.Parameters.AddWithValue("@UserStoryId", userStoryId);
-                            insertTaskCommand.Parameters.AddWithValue("@TaskId", taskId);
-                            insertTaskCommand.ExecuteNonQuery();
-                        }
-                    }
+                    command.ExecuteNonQuery();
                 }
             }
         }
@@ -109,11 +109,13 @@ namespace WebApplication3.Core
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
+                
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "SELECT Id, Title, IsBug, DueDate, UserId, HoursCompleted, HoursRemaining, " +
-                                          "Iteration, State, AreaPath, Description FROM UserStories WHERE Id = @Id";
+                    command.CommandText = "SELECT Id, Title, IsBug, DueDate, UserId, HoursCompleted, HoursRemaining, Iteration, State, AreaPath, Description FROM UserStories WHERE Id = @Id";
+
                     command.Parameters.AddWithValue("@Id", userStoryId);
+
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
                         if (reader.Read())
@@ -125,11 +127,14 @@ namespace WebApplication3.Core
                                 DueDate = reader.GetDateTime(3),
                                 State = reader.GetString(8),
                                 Description = reader.GetString(10),
-                                StoryPoints = reader.GetInt32(6)
+                                StoryPoints = reader.GetInt32(6),
+                                Tasks = new List<string>()
                             };
                         }
                     }
                 }
+
+                AddUserStoryTasks(connection, userStory);
             }
 
             // comments = SELECT * FROM Comments WHERE ItemId = userStory.id
@@ -148,13 +153,13 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
-                    command.CommandText = "DELETE FROM UserStories WHERE Id = @Id";
+                    command.CommandText = "UPDATE Tasks SET UserStoryId = null WHERE UserStoryId = @Id";
+                    
+                    command.CommandText += "\nDELETE FROM UserStories WHERE Id = @Id";
+
                     command.Parameters.AddWithValue("@Id", userStoryId);
-                    int rowsAffected = command.ExecuteNonQuery();
-                    if (rowsAffected == 0)
-                    {
-                        throw new Exception($"UserStory with ID {userStoryId} does not exist.");
-                    }
+
+                    command.ExecuteNonQuery();
                 }
             }
         }
@@ -174,8 +179,7 @@ namespace WebApplication3.Core
                      $"{nameof(UserStory.DueDate)}, " +
                      $"{nameof(UserStory.StoryPoints)}, " +
                      $"{nameof(UserStory.State)}, " +
-                     $"{nameof(UserStory.Description)}, " +
-                     $"{nameof(UserStory.Tasks)} " +
+                     $"{nameof(UserStory.Description)} " +
                      "FROM UserStories";
 
 
@@ -191,16 +195,40 @@ namespace WebApplication3.Core
                                 StoryPoints = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
                                 State = reader.GetString(4),
                                 Description = reader.GetString(5),
-                                Tasks = reader.GetString(6).Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                Tasks = new List<string>()
                             };
+
 
                             userStories.Add(userStory);
                         }
                     }
                 }
+
+                userStories.ForEach(userStory =>
+                {
+                    AddUserStoryTasks(connection, userStory);
+                });
             }
 
             return userStories;
+        }
+
+        private void AddUserStoryTasks(SqlConnection connection, UserStory userStory)
+        {
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT Id FROM Tasks WHERE UserStoryId = @Id";
+
+                command.Parameters.AddWithValue("@Id", userStory.Id);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        userStory.Tasks.Add(reader.GetString(0));
+                    }
+                }
+            }
         }
     }
 }
