@@ -111,6 +111,40 @@ namespace WebApplication3
             );
 
             routes.MapRoute(
+                name: "GetComments",
+                url: "comments/get/{itemId}",
+                defaults: new { controller = "Comments", action = "GetComments", itemId = UrlParameter.Optional }
+          );
+
+            routes.MapRoute(
+                name: "CreateComment",
+                url: "comments/create",
+                defaults: new { controller = "Comments", action = "CreateComment" }
+          );
+
+            routes.MapRoute(
+                name: "UpdateComment",
+                url: "comments/update/{itemId}",
+                defaults: new { controller = "Comments", action = "UpdateComment", itemId = UrlParameter.Optional }
+          );
+
+            routes.MapRoute(
+                name: "DeleteComment",
+                url: "comments/delete/{itemId}",
+                defaults: new { controller = "Comments", action = "DeleteComment", itemId = UrlParameter.Optional }
+          );
+            routes.MapRoute(
+                name: "Get",
+                url: "capacity/get/{iterationId}",
+                defaults: new { controller = "UserCapacity", action = "Get", iterationId = UrlParameter.Optional }
+          );
+            routes.MapRoute(
+                name: "Update",
+                url: "capacity/update",
+                defaults: new { controller = "UserCapacity", action = "Update" }
+          );
+
+            routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
                 defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }

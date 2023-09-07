@@ -10,9 +10,9 @@ using WebApplication3.Models;
 namespace WebApplication3.Core
 {
     public class UserStoryManager : IUserStoryManager
-
     {
         private string connectionString = ConfigurationManager.ConnectionStrings["MyConnection"].ConnectionString;
+
         public void CreateUserStory(UserStory userStory)
         {
             userStory.Id = Guid.NewGuid().ToString();
@@ -25,11 +25,10 @@ namespace WebApplication3.Core
                     command.CommandText = $"INSERT INTO UserStories (" +
                                           $"{nameof(UserStory.Id)}, " +
                                           $"{nameof(UserStory.Title)}, " +
-                                          $"{nameof(UserStory.DueDate)}, " +
                                           $"{nameof(UserStory.State)}, " +
                                           $"{nameof(UserStory.Description)}, " +
                                           $"{nameof(UserStory.StoryPoints)}) " +
-                                          "VALUES (@Id, @Title, @DueDate, @State, @Description, @StoryPoints)";
+                                          "VALUES (@Id, @Title, @State, @Description, @StoryPoints)";
 
                     userStory.Tasks.ForEach(taskId =>
                     {
@@ -38,7 +37,6 @@ namespace WebApplication3.Core
 
                     command.Parameters.AddWithValue("@Id", userStory.Id);
                     command.Parameters.AddWithValue("@Title", userStory.Title);
-                    command.Parameters.AddWithValue("@DueDate", userStory.DueDate);
                     command.Parameters.AddWithValue("@State", userStory.State);
                     command.Parameters.AddWithValue("@Description", userStory.Description);
                     command.Parameters.AddWithValue("@StoryPoints", userStory.StoryPoints);
@@ -73,7 +71,6 @@ namespace WebApplication3.Core
                 {
                     var commandText = $"UPDATE UserStories SET " +
                                           $"{nameof(UserStory.Title)} = @Title, " +
-                                          $"{nameof(UserStory.DueDate)} = @DueDate, " +
                                           $"{nameof(UserStory.State)} = @State, " +
                                           $"{nameof(UserStory.Description)} = @Description, " +
                                           $"{nameof(UserStory.StoryPoints)} = @StoryPoints " +
@@ -92,7 +89,6 @@ namespace WebApplication3.Core
 
                     command.Parameters.AddWithValue("@Id", userStoryId);
                     command.Parameters.AddWithValue("@Title", userStoryModel.Title);
-                    command.Parameters.AddWithValue("@DueDate", userStoryModel.DueDate);
                     command.Parameters.AddWithValue("@State", userStoryModel.State);
                     command.Parameters.AddWithValue("@Description", userStoryModel.Description);
                     command.Parameters.AddWithValue("@StoryPoints", userStoryModel.StoryPoints);
@@ -128,17 +124,16 @@ namespace WebApplication3.Core
                                 State = reader.GetString(8),
                                 Description = reader.GetString(10),
                                 StoryPoints = reader.GetInt32(6),
-                                Tasks = new List<string>()
+                                Tasks = new List<string>(),
+                                Comments = new List<Comment>()
                             };
                         }
                     }
                 }
 
-                AddUserStoryTasks(connection, userStory);
+                AddTasksToUserStory(connection, userStory);
+                AddCommentsToUserStory(connection, userStory);
             }
-
-            // comments = SELECT * FROM Comments WHERE ItemId = userStory.id
-            // userStory.comments = comments
 
             return userStory;
         }
@@ -153,6 +148,8 @@ namespace WebApplication3.Core
                 connection.Open();
                 using (SqlCommand command = connection.CreateCommand())
                 {
+                    command.CommandText = "DELETE FROM Comments WHERE ItemId = @Id\n";
+
                     command.CommandText = "UPDATE Tasks SET UserStoryId = null WHERE UserStoryId = @Id";
                     
                     command.CommandText += "\nDELETE FROM UserStories WHERE Id = @Id";
@@ -195,7 +192,8 @@ namespace WebApplication3.Core
                                 StoryPoints = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
                                 State = reader.GetString(4),
                                 Description = reader.GetString(5),
-                                Tasks = new List<string>()
+                                Tasks = new List<string>(),
+                                Comments = new List<Comment>()
                             };
 
 
@@ -206,14 +204,15 @@ namespace WebApplication3.Core
 
                 userStories.ForEach(userStory =>
                 {
-                    AddUserStoryTasks(connection, userStory);
+                    AddTasksToUserStory(connection, userStory);
+                    AddCommentsToUserStory(connection, userStory);
                 });
             }
 
             return userStories;
         }
 
-        private void AddUserStoryTasks(SqlConnection connection, UserStory userStory)
+        private void AddTasksToUserStory(SqlConnection connection, UserStory userStory)
         {
             using (SqlCommand command = connection.CreateCommand())
             {
@@ -226,6 +225,41 @@ namespace WebApplication3.Core
                     if (reader.Read())
                     {
                         userStory.Tasks.Add(reader.GetString(0));
+                    }
+                }
+            }
+        }
+
+        private void AddCommentsToUserStory(SqlConnection connection, UserStory userStory)
+        {
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                command.CommandText = $"SELECT " +
+                     $"{nameof(Comment.Id)}, " +
+                     $"{nameof(Comment.ItemId)}, " +
+                     $"{nameof(Comment.Content)}, " +
+                     $"{nameof(Comment.Date)}, " +
+                     $"{nameof(Comment.IsEdited)} " +
+                     "FROM Comments";
+
+                command.CommandText += " WHERE ItemId = @Id";
+
+                command.Parameters.AddWithValue("@Id", userStory.Id);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        Comment comment = new Comment()
+                        {
+                            Id = reader.GetString(0),
+                            ItemId = reader.GetString(1),
+                            Content = reader.GetString(2),
+                            Date = reader.IsDBNull(3) ? DateTime.MinValue : reader.GetDateTime(3),
+                            IsEdited = reader.GetBoolean(4)
+                        };
+
+                        userStory.Comments.Add(comment);
                     }
                 }
             }

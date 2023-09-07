@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Web.Http.Cors;
 using System.Web.Mvc;
+using WebApplication3.Core;
 using WebApplication3.Core.Interfaces;
 using WebApplication3.Models;
 
@@ -9,8 +10,7 @@ namespace WebApplication3.Controllers
     [EnableCors(origins: "http://localhost:3000", headers: "*", methods: "*")]
     public class CommentsController : Controller
     {
-        private ICommentManager commentManager;
-
+        private ICommentManager commentManager = new CommentManager();
 
         [HttpGet]
         [Route("comments/get/{itemId}")]

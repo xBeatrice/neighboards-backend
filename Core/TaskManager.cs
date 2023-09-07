@@ -1,10 +1,7 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
 using WebApplication3.Core.Interfaces;
 using WebApplication3.Models;
 
@@ -27,7 +24,6 @@ namespace WebApplication3.Core
                                           $"{nameof(Task.Id)}, " +
                                           $"{nameof(Task.Title)}, " +
                                           $"{nameof(Task.IsBug)}, " +
-                                          $"{nameof(Task.DueDate)}, " +
                                           $"{nameof(Task.UserId)}, " +
                                           $"{nameof(Task.HoursCompleted)}, " +
                                           $"{nameof(Task.HoursRemaining)}, " +
@@ -36,12 +32,11 @@ namespace WebApplication3.Core
                                           $"{nameof(Task.AreaPath)}, " +
                                           $"{nameof(Task.UserStoryId)}, " +
                                           $"{nameof(Task.Description)}) " +
-                                          $"VALUES (@Id, @Title, @IsBug, @DueDate, @UserId, @HoursCompleted, @HoursRemaining, @Iteration, @State, @AreaPath, @UserStoryId, @Description)"; 
+                                          $"VALUES (@Id, @Title, @IsBug, @UserId, @HoursCompleted, @HoursRemaining, @Iteration, @State, @AreaPath, @UserStoryId, @Description)"; 
                     
                     command.Parameters.AddWithValue("@Id", task.Id);
                     command.Parameters.AddWithValue("@Title", task.Title);
                     command.Parameters.AddWithValue("@IsBug", task.IsBug);
-                    command.Parameters.AddWithValue("@DueDate", task.DueDate);
                     command.Parameters.AddWithValue("@UserId", task.UserId);
                     command.Parameters.AddWithValue("@HoursCompleted", task.HoursCompleted);
                     command.Parameters.AddWithValue("@HoursRemaining", task.HoursRemaining);
@@ -49,7 +44,7 @@ namespace WebApplication3.Core
                     command.Parameters.AddWithValue("@State", task.State);
                     command.Parameters.AddWithValue("@AreaPath", task.AreaPath);
                     command.Parameters.AddWithValue("@Description", task.Description);
-                    command.Parameters.AddWithValue("@UserStoryId", task.UserStoryId);
+                    command.Parameters.AddWithValue("@UserStoryId", task.UserStoryId ?? string.Empty);
 
                     command.ExecuteNonQuery();
                 }
@@ -66,7 +61,6 @@ namespace WebApplication3.Core
                     command.CommandText = $"UPDATE Tasks SET " +
                                            $"{nameof(Task.Title)} = @Title, " +
                                            $"{nameof(Task.IsBug)} = @IsBug, " +
-                                           $"{nameof(Task.DueDate)} = @DueDate, " +
                                            $"{nameof(Task.UserId)} = @UserId, " +
                                            $"{nameof(Task.HoursCompleted)} = @HoursCompleted, " +
                                            $"{nameof(Task.HoursRemaining)} = @HoursRemaining, " +
@@ -80,7 +74,6 @@ namespace WebApplication3.Core
                     command.Parameters.AddWithValue("@Id", taskId);
                     command.Parameters.AddWithValue("@Title", taskModel.Title);
                     command.Parameters.AddWithValue("@IsBug", taskModel.IsBug);
-                    command.Parameters.AddWithValue("@DueDate", taskModel.DueDate);
                     command.Parameters.AddWithValue("@UserId", taskModel.UserId);
                     command.Parameters.AddWithValue("@HoursCompleted", taskModel.HoursCompleted);
                     command.Parameters.AddWithValue("@HoursRemaining", taskModel.HoursRemaining);
@@ -146,7 +139,10 @@ namespace WebApplication3.Core
                         }
                     }
                 }
+
+                AddCommentsToTask(connection, task);
             }
+
             return task;
         }
 
@@ -155,8 +151,10 @@ namespace WebApplication3.Core
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
+                
                 using (SqlCommand command = connection.CreateCommand())
                 {
+                    command.CommandText = "DELETE From Comments WHERE ItemId = @Id\n";
                     command.CommandText = $"DELETE FROM Tasks WHERE {nameof(Task.Id)} = @Id";
                     command.Parameters.AddWithValue("@Id", taskId);
 
@@ -218,10 +216,16 @@ namespace WebApplication3.Core
                         }
                     }
                 }
+
+                tasks.ForEach(task =>
+                {
+                    AddCommentsToTask(connection, task);
+                });
             }
 
             return tasks;
         }
+
         public List<Task> GetAllTasks()
         {
             List<Task> tasks = new List<Task>();
@@ -254,17 +258,17 @@ namespace WebApplication3.Core
                             Task task = new Task
                             {
                                 Id = reader.GetString(0),
-                                Title = reader.GetString(1),
-                                IsBug = reader.GetBoolean(2),
-                                DueDate = reader.GetDateTime(3),
+                                Title = reader.IsDBNull(1) ? null : reader.GetString(1),
+                                IsBug = reader.IsDBNull(2) ? false : reader.GetBoolean(2),
+                                DueDate = reader.IsDBNull(3) ? DateTime.Now : reader.GetDateTime(3),
                                 UserId = reader.IsDBNull(4) ? null : reader.GetString(4), // Handle nullable column
-                                HoursCompleted = reader.GetInt32(5),
-                                HoursRemaining = reader.GetInt32(6),
-                                Iteration = reader.GetInt32(7),
-                                State = reader.GetString(8),
-                                AreaPath = reader.GetString(9),
-                                Description = reader.GetString(10),
-                                UserStoryId = reader.GetString(11),
+                                HoursCompleted = reader.IsDBNull(5) ? 0 : reader.GetInt32(5),
+                                HoursRemaining = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
+                                Iteration = reader.IsDBNull(7) ? 0 : reader.GetInt32(7),
+                                State = reader.IsDBNull(8) ? null : reader.GetString(8),
+                                AreaPath = reader.IsDBNull(9) ? null : reader.GetString(9),
+                                Description = reader.IsDBNull(10) ? null : reader.GetString(10),
+                                UserStoryId = reader.IsDBNull(11) ? null : reader.GetString(11),
                                 Comments = new List<Comment>()
                             };
 
@@ -272,11 +276,49 @@ namespace WebApplication3.Core
                         }
                     }
                 }
+
+                tasks.ForEach(task =>
+                {
+                    AddCommentsToTask(connection, task);
+                });
             }
 
             return tasks;
         }
 
+        private void AddCommentsToTask(SqlConnection connection, Task task)
+        {
+            using (SqlCommand command = connection.CreateCommand())
+            {
+                command.CommandText = $"SELECT " +
+                     $"{nameof(Comment.Id)}, " +
+                     $"{nameof(Comment.ItemId)}, " +
+                     $"{nameof(Comment.Content)}, " +
+                     $"{nameof(Comment.Date)}, " +
+                     $"{nameof(Comment.IsEdited)} " +
+                     "FROM Comments";
 
+                command.CommandText += " WHERE ItemId = @Id";
+
+                command.Parameters.AddWithValue("@Id", task.Id);
+
+                using (SqlDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        Comment comment = new Comment()
+                        {
+                            Id = reader.GetString(0),
+                            ItemId = reader.GetString(1),
+                            Content = reader.GetString(2),
+                            Date = reader.IsDBNull(3) ? DateTime.MinValue : reader.GetDateTime(3),
+                            IsEdited = reader.GetBoolean(4)
+                        };
+
+                        task.Comments.Add(comment);
+                    }
+                }
+            }
+        }
     }
 }

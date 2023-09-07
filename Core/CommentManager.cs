@@ -11,6 +11,11 @@ namespace WebApplication3.Core
     {
         private string connectionString = ConfigurationManager.ConnectionStrings["MyConnection"].ConnectionString;
 
+        public CommentManager()
+        {
+
+        }
+
         public void CreateComment(Comment comment)
         {
             comment.Id = Guid.NewGuid().ToString();
@@ -25,15 +30,13 @@ namespace WebApplication3.Core
                         $"{nameof(Comment.ItemId)}, " +
                         $"{nameof(Comment.UserId)}, " +
                         $"{nameof(Comment.Content)}, " +
-                        $"{nameof(Comment.Date)}, " +
                         $"{nameof(Comment.IsEdited)}) " +
-                        "VALUES (@Id, @ItemId, @UserId, @Content, @Date, @IsEdited)";
+                        "VALUES (@Id, @ItemId, @UserId, @Content, @IsEdited)";
 
                     command.Parameters.AddWithValue("@Id", comment.Id);
                     command.Parameters.AddWithValue("@ItemId", comment.ItemId);
                     command.Parameters.AddWithValue("@UserId", comment.UserId);
                     command.Parameters.AddWithValue("@Content", comment.Content);
-                    command.Parameters.AddWithValue("@Date", comment.Date);
                     command.Parameters.AddWithValue("@IsEdited", comment.IsEdited);
                     command.ExecuteNonQuery();
                 }

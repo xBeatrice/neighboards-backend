@@ -141,6 +141,7 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CommentsController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\UserCapacityController.cs" />
     <Compile Include="Controllers\TasksController.cs" />
     <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Controllers\UserStoriesController.cs" />
@@ -149,14 +150,17 @@
     <Compile Include="Core\Interfaces\ICommentManager.cs" />
     <Compile Include="Core\Interfaces\IFileManager.cs" />
     <Compile Include="Core\Interfaces\ITaskManager.cs" />
+    <Compile Include="Core\Interfaces\IUserCapacityManager.cs" />
     <Compile Include="Core\Interfaces\IUserManager.cs" />
     <Compile Include="Core\Interfaces\IUserStoryManager.cs" />
     <Compile Include="Core\TaskManager.cs" />
+    <Compile Include="Core\UserCapacityManager.cs" />
     <Compile Include="Core\UserManager.cs" />
     <Compile Include="Core\UserStoryManager.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\UserCapacity.cs" />
     <Compile Include="Models\Comment.cs" />
     <Compile Include="Models\Item.cs" />
     <Compile Include="Models\Task.cs" />

@@ -7,9 +7,9 @@ namespace WebApplication3.Models
 {
     public class Item
     {
-        public string Title { get; set; }
-
         public string Id { get; set; }
+
+        public string Title { get; set; }
 
         public DateTime DueDate { get; set; }
 
